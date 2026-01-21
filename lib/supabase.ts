@@ -29,6 +29,7 @@ export interface Usuario {
   email: string
   nombre: string
   apellido?: string
+  avatar_url?: string
   documento_identidad?: string
   celular?: string
   pais?: string
@@ -48,6 +49,7 @@ export interface Cliente {
   documento_identidad: string
   nombre: string
   apellido: string
+  avatar_url?: string
   telefono?: string
   email?: string
   direccion?: string

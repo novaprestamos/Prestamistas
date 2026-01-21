@@ -2,9 +2,21 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, Prestamo, Cliente } from '@/lib/supabase'
-import { X } from 'lucide-react'
+import {
+  X,
+  Users,
+  DollarSign,
+  Percent,
+  Layers,
+  CalendarClock,
+  Calendar,
+  Clock,
+  FileText,
+  Shield,
+} from 'lucide-react'
 import { format, addDays } from 'date-fns'
 import { useUsuario } from '@/lib/useUsuario'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 interface PrestamoFormProps {
   prestamo?: Prestamo | null
@@ -27,6 +39,8 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
   })
 
   const [montoTotal, setMontoTotal] = useState(0)
+  const [defaultTasa, setDefaultTasa] = useState<string | null>(null)
+  const [tasaTouched, setTasaTouched] = useState(false)
 
   useEffect(() => {
     if (prestamo) {
@@ -44,6 +58,31 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
       setMontoTotal(prestamo.monto_total)
     }
   }, [prestamo])
+
+  useEffect(() => {
+    const loadDefaultTasa = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('configuracion')
+          .select('valor')
+          .eq('clave', 'tasa_interes_default')
+          .single()
+
+        if (error) throw error
+        const valor = data?.valor ?? null
+        setDefaultTasa(valor)
+
+        if (!prestamo && valor && !tasaTouched) {
+          setFormData((prev) => ({ ...prev, tasa_interes: valor }))
+        }
+      } catch (error) {
+        console.error('Error cargando tasa por defecto:', error)
+        notifyError('Error al cargar la tasa por defecto')
+      }
+    }
+
+    loadDefaultTasa()
+  }, [prestamo, tasaTouched])
 
   useEffect(() => {
     calcularMontoTotal()
@@ -100,7 +139,7 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
           .eq('id', prestamo.id)
 
         if (error) throw error
-        alert('Préstamo actualizado exitosamente')
+        notifySuccess('Préstamo actualizado exitosamente')
       } else {
         // Crear
         const { error } = await supabase
@@ -111,49 +150,53 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
           }])
 
         if (error) throw error
-        alert('Préstamo creado exitosamente')
+        notifySuccess('Préstamo creado exitosamente')
       }
 
       onClose()
     } catch (error: any) {
       console.error('Error guardando préstamo:', error)
-      alert(`Error: ${error.message}`)
+      notifyError(error?.message ? `Error: ${error.message}` : 'Error al guardar préstamo')
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">
+    <div className="modal-backdrop">
+      <div className="modal-card">
+        <div className="modal-header">
+          <h2 className="modal-title">
             {prestamo ? 'Editar Préstamo' : 'Nuevo Préstamo'}
           </h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="icon-button"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="modal-form">
           <div>
             <label className="block text-sm font-medium mb-1">Cliente *</label>
-            <select
-              required
-              value={formData.cliente_id}
-              onChange={(e) =>
-                setFormData({ ...formData, cliente_id: e.target.value })
-              }
-              className="input"
-            >
-              <option value="">Seleccionar cliente...</option>
-              {clientes.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>
-                  {cliente.nombre} {cliente.apellido} - {cliente.documento_identidad}
-                </option>
-              ))}
-            </select>
+            <div className="field-wrap">
+              <Users className="field-icon" />
+              <select
+                required
+                value={formData.cliente_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, cliente_id: e.target.value })
+                }
+                className="input field-input"
+              >
+                <option value="">Seleccionar cliente...</option>
+                {clientes.map((cliente) => (
+                  <option key={cliente.id} value={cliente.id}>
+                    {cliente.nombre} {cliente.apellido} - {cliente.documento_identidad}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -161,119 +204,153 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
               <label className="block text-sm font-medium mb-1">
                 Monto Principal *
               </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                value={formData.monto_principal}
-                onChange={(e) =>
-                  setFormData({ ...formData, monto_principal: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <DollarSign className="field-icon" />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  value={formData.monto_principal}
+                  onChange={(e) =>
+                    setFormData({ ...formData, monto_principal: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Tasa de Interés (%) *
               </label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                required
-                value={formData.tasa_interes}
-                onChange={(e) =>
-                  setFormData({ ...formData, tasa_interes: e.target.value })
-                }
-                className="input"
-              />
+              {defaultTasa && (
+                <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                  <span>Por defecto: {defaultTasa}%</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, tasa_interes: defaultTasa }))
+                      setTasaTouched(false)
+                    }}
+                    className="text-indigo-600 hover:text-indigo-500 font-medium"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              )}
+              <div className="field-wrap">
+                <Percent className="field-icon" />
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  required
+                  value={formData.tasa_interes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tasa_interes: e.target.value })
+                  }
+                  className="input field-input"
+                  onInput={() => setTasaTouched(true)}
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Tipo de Interés *
               </label>
-              <select
-                value={formData.tipo_interes}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tipo_interes: e.target.value as 'simple' | 'compuesto',
-                  })
-                }
-                className="input"
-              >
-                <option value="simple">Simple</option>
-                <option value="compuesto">Compuesto</option>
-              </select>
+              <div className="field-wrap">
+                <Layers className="field-icon" />
+                <select
+                  value={formData.tipo_interes}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      tipo_interes: e.target.value as 'simple' | 'compuesto',
+                    })
+                  }
+                  className="input field-input"
+                >
+                  <option value="simple">Simple</option>
+                  <option value="compuesto">Compuesto</option>
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Plazo (días) *
               </label>
-              <input
-                type="number"
-                min="1"
-                required
-                value={formData.plazo_dias}
-                onChange={(e) =>
-                  setFormData({ ...formData, plazo_dias: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <CalendarClock className="field-icon" />
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={formData.plazo_dias}
+                  onChange={(e) =>
+                    setFormData({ ...formData, plazo_dias: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Fecha de Inicio *
               </label>
-              <input
-                type="date"
-                required
-                value={formData.fecha_inicio}
-                onChange={(e) =>
-                  setFormData({ ...formData, fecha_inicio: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <Calendar className="field-icon" />
+                <input
+                  type="date"
+                  required
+                  value={formData.fecha_inicio}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fecha_inicio: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Frecuencia de Pago *
               </label>
-              <select
-                value={formData.frecuencia_pago}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    frecuencia_pago: e.target.value as any,
-                  })
-                }
-                className="input"
-              >
-                <option value="diario">Diario</option>
-                <option value="semanal">Semanal</option>
-                <option value="quincenal">Quincenal</option>
-                <option value="mensual">Mensual</option>
-              </select>
+              <div className="field-wrap">
+                <Clock className="field-icon" />
+                <select
+                  value={formData.frecuencia_pago}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      frecuencia_pago: e.target.value as any,
+                    })
+                  }
+                  className="input field-input"
+                >
+                  <option value="diario">Diario</option>
+                  <option value="semanal">Semanal</option>
+                  <option value="quincenal">Quincenal</option>
+                  <option value="mensual">Mensual</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="bg-primary-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Monto Total a Pagar:</span>
-              <span className="text-2xl font-bold text-primary-700">
+          <div className="loan-summary">
+            <div className="loan-summary-row">
+              <span className="loan-summary-label">Monto Total a Pagar:</span>
+              <span className="loan-summary-value">
                 ${montoTotal.toLocaleString('es-ES', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
               </span>
             </div>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="loan-summary-note">
               Interés: $
               {(montoTotal - (parseFloat(formData.monto_principal) || 0)).toLocaleString(
                 'es-ES',
@@ -284,26 +361,32 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
 
           <div>
             <label className="block text-sm font-medium mb-1">Descripción</label>
-            <textarea
-              value={formData.descripcion}
-              onChange={(e) =>
-                setFormData({ ...formData, descripcion: e.target.value })
-              }
-              className="input"
-              rows={2}
-            />
+            <div className="field-wrap">
+              <FileText className="field-icon" />
+              <textarea
+                value={formData.descripcion}
+                onChange={(e) =>
+                  setFormData({ ...formData, descripcion: e.target.value })
+                }
+                className="input field-textarea"
+                rows={2}
+              />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Garantía</label>
-            <textarea
-              value={formData.garantia}
-              onChange={(e) =>
-                setFormData({ ...formData, garantia: e.target.value })
-              }
-              className="input"
-              rows={2}
-            />
+            <div className="field-wrap">
+              <Shield className="field-icon" />
+              <textarea
+                value={formData.garantia}
+                onChange={(e) =>
+                  setFormData({ ...formData, garantia: e.target.value })
+                }
+                className="input field-textarea"
+                rows={2}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">

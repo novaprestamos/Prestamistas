@@ -3,7 +3,26 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react'
+import {
+  LogIn,
+  Mail,
+  Lock,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  User,
+  IdCard,
+  Phone,
+  Flag,
+  Map,
+  MapPin,
+  Home,
+  Users,
+  Calendar,
+} from 'lucide-react'
 
 export function LoginForm() {
   const router = useRouter()
@@ -250,28 +269,34 @@ export function LoginForm() {
       if (authError) throw authError
 
       if (authData.user) {
-        const { error: dbError } = await supabase.from('usuarios').insert({
-          id: authData.user.id,
-          email,
-          nombre,
-          apellido,
-          documento_identidad: cedula,
-          celular,
-          pais,
-          region,
-          ciudad,
-          direccion,
-          sexo: sexo as 'masculino' | 'femenino' | 'otro',
-          fecha_nacimiento: fechaNacimiento || null,
-          rol: 'prestamista',
-          activo: false,
+        const response = await fetch('/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: authData.user.id,
+            email,
+            nombre,
+            apellido,
+            documento_identidad: cedula,
+            celular,
+            pais,
+            region,
+            ciudad,
+            direccion,
+            sexo,
+            fecha_nacimiento: fechaNacimiento || null,
+          }),
         })
 
-        if (dbError) throw dbError
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result?.error || 'No se pudo registrar el usuario')
+        }
       }
 
       await supabase.auth.signOut()
-      setNotice('Registro enviado. Un administrador debe aprobar tu acceso.')
+      setNotice('Solicitud enviada. Un administrador debe aprobar tu acceso antes de poder ingresar.')
       setIsRegister(false)
       setPassword('')
       setConfirmPassword('')
@@ -336,6 +361,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Nombre</label>
                     <div className="login-input-wrap">
+                      <User className="login-input-icon" />
                       <input
                         type="text"
                         required
@@ -350,6 +376,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Apellido</label>
                     <div className="login-input-wrap">
+                      <User className="login-input-icon" />
                       <input
                         type="text"
                         required
@@ -367,6 +394,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Numero de cedula</label>
                     <div className="login-input-wrap">
+                      <IdCard className="login-input-icon" />
                       <input
                         type="text"
                         required
@@ -381,6 +409,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Numero de celular</label>
                     <div className="login-input-wrap">
+                      <Phone className="login-input-icon" />
                       <input
                         type="tel"
                         required
@@ -398,12 +427,14 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Pais</label>
                     <div className="login-input-wrap">
+                      <Flag className="login-input-icon" />
                       <input type="text" value={pais} disabled className="login-input" />
                     </div>
                   </div>
                   <div>
                     <label className="login-label">Region</label>
                     <div className="login-input-wrap">
+                      <Map className="login-input-icon" />
                       <input type="text" value={region} disabled className="login-input" />
                     </div>
                   </div>
@@ -413,6 +444,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Ciudad (Antioquia)</label>
                     <div className="login-input-wrap">
+                      <MapPin className="login-input-icon" />
                       <select
                         required
                         value={ciudad}
@@ -432,6 +464,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Direccion</label>
                     <div className="login-input-wrap">
+                      <Home className="login-input-icon" />
                       <input
                         type="text"
                         required
@@ -449,6 +482,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Sexo</label>
                     <div className="login-input-wrap">
+                      <Users className="login-input-icon" />
                       <select
                         required
                         value={sexo}
@@ -466,6 +500,7 @@ export function LoginForm() {
                   <div>
                     <label className="login-label">Fecha de nacimiento</label>
                     <div className="login-input-wrap">
+                      <Calendar className="login-input-icon" />
                       <input
                         type="date"
                         value={fechaNacimiento}

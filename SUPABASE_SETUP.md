@@ -23,6 +23,7 @@ Este script creará:
 - Funciones para cálculos automáticos
 - Triggers para actualización automática de campos
 - Datos iniciales de configuración
+- Campos de avatar en usuarios y clientes
 
 ### 3. Configurar variables de entorno
 
@@ -91,6 +92,16 @@ INSERT INTO usuarios (email, nombre, apellido, rol) VALUES
 INSERT INTO clientes (documento_identidad, nombre, apellido, telefono, email) VALUES
   ('12345678', 'Juan', 'Pérez', '555-1234', 'juan@example.com');
 ```
+
+### 5.1 Configurar storage para avatares
+
+1. En el panel de Supabase, ve a **SQL Editor**
+2. Abre el archivo `supabase/rls_policies.sql`
+3. Copia y ejecuta también la sección **STORAGE PARA AVATARES**
+
+Esto crea:
+- Un bucket público `avatars`
+- Políticas para leer y subir imágenes de perfil
 
 ## Estructura de las tablas
 

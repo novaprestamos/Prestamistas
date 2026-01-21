@@ -7,6 +7,7 @@ import { PagoCard } from './PagoCard'
 import { Plus, Search, Filter, Calendar } from 'lucide-react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useUsuario } from '@/lib/useUsuario'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 export function PagosList() {
   const { usuario } = useUsuario()
@@ -96,7 +97,7 @@ export function PagosList() {
       setPagos(data || [])
     } catch (error) {
       console.error('Error cargando pagos:', error)
-      alert('Error al cargar pagos')
+      notifyError('Error al cargar pagos')
     } finally {
       setLoading(false)
     }
@@ -112,11 +113,12 @@ export function PagosList() {
         .eq('id', id)
 
       if (error) throw error
+      notifySuccess('Pago eliminado exitosamente')
       loadPagos()
       loadPrestamos()
     } catch (error) {
       console.error('Error eliminando pago:', error)
-      alert('Error al eliminar pago')
+      notifyError('Error al eliminar pago')
     }
   }
 
@@ -133,6 +135,7 @@ export function PagosList() {
   }
 
   const totalPagos = pagos.reduce((sum, pago) => sum + pago.monto, 0)
+  const pagosCount = pagos.length
 
   const filteredPagos = pagos.filter(
     (pago) =>
@@ -150,53 +153,84 @@ export function PagosList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestión de Pagos</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn btn-primary flex items-center space-x-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Registrar Pago</span>
-        </button>
-      </div>
-
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Buscar por cliente o número de recibo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input pl-10"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Calendar className="h-5 w-5 text-gray-500" />
-          <input
-            type="month"
-            value={filterMes}
-            onChange={(e) => setFilterMes(e.target.value)}
-            className="input"
-          />
+    <div className="page">
+      <div className="hero-card">
+        <h1 className="hero-title">Gestión de Pagos</h1>
+        <p className="hero-subtitle">Registra pagos y controla la recuperación mensual</p>
+        <div className="page-actions">
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn btn-primary flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Registrar Pago</span>
+          </button>
         </div>
       </div>
 
-      <div className="bg-primary-50 p-4 rounded-lg">
-        <div className="flex justify-between items-center">
-          <span className="font-medium text-lg">Total del Mes:</span>
-          <span className="text-2xl font-bold text-primary-700">
-            ${totalPagos.toLocaleString('es-ES', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
+      <div className="filter-panel">
+        <div className="filter-group">
+          <span className="filter-label">Buscar</span>
+          <div className="filter-input">
+            <Search className="filter-icon" />
+            <input
+              type="text"
+              placeholder="Buscar por cliente o número de recibo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input filter-input-field"
+            />
+          </div>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
-          {pagos.length} pago(s) registrado(s)
-        </p>
+        <div className="filter-group">
+          <span className="filter-label">Mes</span>
+          <div className="filter-input">
+            <Calendar className="filter-icon" />
+            <input
+              type="month"
+              value={filterMes}
+              onChange={(e) => setFilterMes(e.target.value)}
+              className="input filter-input-field"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="stat-grid">
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Total del Mes</p>
+            <p className="stat-value">
+              ${totalPagos.toLocaleString('es-ES', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {pagosCount} pago(s) registrado(s)
+            </p>
+          </div>
+          <div className="kpi-icon">
+            <Calendar className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Promedio por pago</p>
+            <p className="stat-value">
+              ${pagosCount > 0
+                ? (totalPagos / pagosCount).toLocaleString('es-ES', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : '0,00'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Basado en pagos del mes</p>
+          </div>
+          <div className="kpi-icon">
+            <Calendar className="h-5 w-5" />
+          </div>
+        </div>
       </div>
 
       {showForm && (
@@ -207,24 +241,30 @@ export function PagosList() {
         />
       )}
 
-      <div className="space-y-4">
-        {filteredPagos.map((pago) => (
-          <PagoCard
-            key={pago.id}
-            pago={pago}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
-
-      {filteredPagos.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          {searchTerm
-            ? 'No se encontraron pagos'
-            : 'No hay pagos registrados para este mes'}
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Historial de Pagos</h2>
+            <p className="panel-subtitle">Detalle de pagos registrados</p>
+          </div>
         </div>
-      )}
+        <div className="panel-body space-y-4">
+          {filteredPagos.map((pago) => (
+            <PagoCard
+              key={pago.id}
+              pago={pago}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+
+          {filteredPagos.length === 0 && (
+            <div className="empty-state">
+              {searchTerm ? 'No se encontraron pagos' : 'No hay pagos registrados para este mes'}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

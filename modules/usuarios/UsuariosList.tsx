@@ -6,6 +6,7 @@ import { UsuarioForm } from './UsuarioForm'
 import { UsuarioCard } from './UsuarioCard'
 import { Plus, Search, Shield, User } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 export function UsuariosList() {
   const { usuario: currentUser } = useUsuario()
@@ -18,7 +19,7 @@ export function UsuariosList() {
   useEffect(() => {
     // Solo admin puede ver esta página
     if (currentUser && currentUser.rol !== 'admin') {
-      alert('No tienes permisos para acceder a esta sección')
+      notifyError('No tienes permisos para acceder a esta sección')
       window.location.href = '/'
       return
     }
@@ -37,7 +38,7 @@ export function UsuariosList() {
       setUsuarios(data || [])
     } catch (error) {
       console.error('Error cargando usuarios:', error)
-      alert('Error al cargar usuarios')
+      notifyError('Error al cargar usuarios')
     } finally {
       setLoading(false)
     }
@@ -53,10 +54,11 @@ export function UsuariosList() {
         .eq('id', id)
 
       if (error) throw error
+      notifySuccess('Usuario eliminado exitosamente')
       loadUsuarios()
     } catch (error) {
       console.error('Error eliminando usuario:', error)
-      alert('Error al eliminar usuario')
+      notifyError('Error al eliminar usuario')
     }
   }
 
@@ -70,10 +72,11 @@ export function UsuariosList() {
         .eq('id', id)
 
       if (error) throw error
+      notifySuccess('Usuario aprobado exitosamente')
       loadUsuarios()
     } catch (error) {
       console.error('Error aprobando usuario:', error)
-      alert('Error al aprobar usuario')
+      notifyError('Error al aprobar usuario')
     }
   }
 
@@ -95,6 +98,10 @@ export function UsuariosList() {
       usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const totalUsuarios = usuarios.length
+  const usuariosActivos = usuarios.filter((u) => u.activo).length
+  const usuariosPendientes = totalUsuarios - usuariosActivos
+
   if (currentUser?.rol !== 'admin') {
     return (
       <div className="text-center py-12">
@@ -110,27 +117,65 @@ export function UsuariosList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn btn-primary flex items-center space-x-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Nuevo Usuario</span>
-        </button>
+    <div className="page">
+      <div className="hero-card">
+        <h1 className="hero-title">Gestión de Usuarios</h1>
+        <p className="hero-subtitle">Administra roles y aprobaciones</p>
+        <div className="page-actions">
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn btn-primary flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Nuevo Usuario</span>
+          </button>
+        </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-        <input
-          type="text"
-          placeholder="Buscar por nombre, apellido o email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="input pl-10"
-        />
+      <div className="filter-panel">
+        <div className="filter-group">
+          <span className="filter-label">Buscar</span>
+          <div className="filter-input">
+            <Search className="filter-icon" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, apellido o email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input filter-input-field"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="stat-grid">
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Total usuarios</p>
+            <p className="stat-value">{totalUsuarios}</p>
+          </div>
+          <div className="kpi-icon">
+            <User className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Activos</p>
+            <p className="stat-value">{usuariosActivos}</p>
+          </div>
+          <div className="kpi-icon">
+            <User className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Pendientes</p>
+            <p className="stat-value">{usuariosPendientes}</p>
+          </div>
+          <div className="kpi-icon">
+            <User className="h-5 w-5" />
+          </div>
+        </div>
       </div>
 
       {showForm && (
@@ -140,24 +185,34 @@ export function UsuariosList() {
         />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredUsuarios.map((usuario) => (
-          <UsuarioCard
-            key={usuario.id}
-            usuario={usuario}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onApprove={handleApprove}
-            currentUserId={currentUser?.id}
-          />
-        ))}
-      </div>
-
-      {filteredUsuarios.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          {searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Listado de Usuarios</h2>
+            <p className="panel-subtitle">Accesos y aprobaciones</p>
+          </div>
         </div>
-      )}
+        <div className="panel-body">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredUsuarios.map((usuario) => (
+              <UsuarioCard
+                key={usuario.id}
+                usuario={usuario}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onApprove={handleApprove}
+                currentUserId={currentUser?.id}
+              />
+            ))}
+          </div>
+
+          {filteredUsuarios.length === 0 && (
+            <div className="empty-state">
+              {searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

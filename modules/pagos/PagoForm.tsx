@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, Pago, Prestamo } from '@/lib/supabase'
-import { X } from 'lucide-react'
+import { X, FileText, DollarSign, Calendar, ClipboardList, CreditCard, Receipt, StickyNote } from 'lucide-react'
 import { format } from 'date-fns'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 interface PagoFormProps {
   pago?: Pago | null
@@ -65,7 +66,7 @@ export function PagoForm({ pago, prestamos, onClose }: PagoFormProps) {
           .eq('id', pago.id)
 
         if (error) throw error
-        alert('Pago actualizado exitosamente')
+        notifySuccess('Pago actualizado exitosamente')
       } else {
         // Crear
         const { error } = await supabase
@@ -73,13 +74,13 @@ export function PagoForm({ pago, prestamos, onClose }: PagoFormProps) {
           .insert([pagoData])
 
         if (error) throw error
-        alert('Pago registrado exitosamente')
+        notifySuccess('Pago registrado exitosamente')
       }
 
       onClose()
     } catch (error: any) {
       console.error('Error guardando pago:', error)
-      alert(`Error: ${error.message}`)
+      notifyError(error?.message ? `Error: ${error.message}` : 'Error al guardar pago')
     }
   }
 
@@ -101,30 +102,33 @@ export function PagoForm({ pago, prestamos, onClose }: PagoFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Préstamo *</label>
-            <select
-              required
-              value={formData.prestamo_id}
-              onChange={(e) =>
-                setFormData({ ...formData, prestamo_id: e.target.value })
-              }
-              className="input"
-            >
-              <option value="">Seleccionar préstamo...</option>
-              {prestamos.map((prestamo) => (
-                <option key={prestamo.id} value={prestamo.id}>
-                  Cliente ID: {prestamo.cliente_id} - Monto: $
-                  {prestamo.monto_principal.toLocaleString('es-ES', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{' '}
-                  - Pendiente: $
-                  {prestamo.monto_pendiente.toLocaleString('es-ES', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </option>
-              ))}
-            </select>
+            <div className="field-wrap">
+              <FileText className="field-icon" />
+              <select
+                required
+                value={formData.prestamo_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, prestamo_id: e.target.value })
+                }
+                className="input field-input"
+              >
+                <option value="">Seleccionar préstamo...</option>
+                {prestamos.map((prestamo) => (
+                  <option key={prestamo.id} value={prestamo.id}>
+                    Cliente ID: {prestamo.cliente_id} - Monto: $
+                    {prestamo.monto_principal.toLocaleString('es-ES', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    - Pendiente: $
+                    {prestamo.monto_pendiente.toLocaleString('es-ES', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </option>
+                ))}
+              </select>
+            </div>
             {prestamoSeleccionado && (
               <p className="text-sm text-gray-600 mt-1">
                 Pendiente: $
@@ -139,75 +143,87 @@ export function PagoForm({ pago, prestamos, onClose }: PagoFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Monto *</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                max={prestamoSeleccionado?.monto_pendiente || undefined}
-                required
-                value={formData.monto}
-                onChange={(e) =>
-                  setFormData({ ...formData, monto: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <DollarSign className="field-icon" />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={prestamoSeleccionado?.monto_pendiente || undefined}
+                  required
+                  value={formData.monto}
+                  onChange={(e) =>
+                    setFormData({ ...formData, monto: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Fecha de Pago *
               </label>
-              <input
-                type="date"
-                required
-                value={formData.fecha_pago}
-                onChange={(e) =>
-                  setFormData({ ...formData, fecha_pago: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <Calendar className="field-icon" />
+                <input
+                  type="date"
+                  required
+                  value={formData.fecha_pago}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fecha_pago: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Tipo de Pago *
               </label>
-              <select
-                value={formData.tipo_pago}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tipo_pago: e.target.value as any,
-                  })
-                }
-                className="input"
-              >
-                <option value="normal">Normal</option>
-                <option value="adelantado">Adelantado</option>
-                <option value="parcial">Parcial</option>
-                <option value="completo">Completo</option>
-              </select>
+              <div className="field-wrap">
+                <ClipboardList className="field-icon" />
+                <select
+                  value={formData.tipo_pago}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      tipo_pago: e.target.value as any,
+                    })
+                  }
+                  className="input field-input"
+                >
+                  <option value="normal">Normal</option>
+                  <option value="adelantado">Adelantado</option>
+                  <option value="parcial">Parcial</option>
+                  <option value="completo">Completo</option>
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 Método de Pago *
               </label>
-              <select
-                value={formData.metodo_pago}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    metodo_pago: e.target.value as any,
-                  })
-                }
-                className="input"
-              >
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="cheque">Cheque</option>
-                <option value="tarjeta">Tarjeta</option>
-              </select>
+              <div className="field-wrap">
+                <CreditCard className="field-icon" />
+                <select
+                  value={formData.metodo_pago}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      metodo_pago: e.target.value as any,
+                    })
+                  }
+                  className="input field-input"
+                >
+                  <option value="efectivo">Efectivo</option>
+                  <option value="transferencia">Transferencia</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="tarjeta">Tarjeta</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -215,26 +231,32 @@ export function PagoForm({ pago, prestamos, onClose }: PagoFormProps) {
             <label className="block text-sm font-medium mb-1">
               Número de Recibo
             </label>
-            <input
-              type="text"
-              value={formData.numero_recibo}
-              onChange={(e) =>
-                setFormData({ ...formData, numero_recibo: e.target.value })
-              }
-              className="input"
-            />
+            <div className="field-wrap">
+              <Receipt className="field-icon" />
+              <input
+                type="text"
+                value={formData.numero_recibo}
+                onChange={(e) =>
+                  setFormData({ ...formData, numero_recibo: e.target.value })
+                }
+                className="input field-input"
+              />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Notas</label>
-            <textarea
-              value={formData.notas}
-              onChange={(e) =>
-                setFormData({ ...formData, notas: e.target.value })
-              }
-              className="input"
-              rows={3}
-            />
+            <div className="field-wrap">
+              <StickyNote className="field-icon" />
+              <textarea
+                value={formData.notas}
+                onChange={(e) =>
+                  setFormData({ ...formData, notas: e.target.value })
+                }
+                className="input field-textarea"
+                rows={3}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">

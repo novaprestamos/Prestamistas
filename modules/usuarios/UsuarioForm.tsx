@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, Usuario } from '@/lib/supabase'
-import { X } from 'lucide-react'
+import { X, Mail, Lock, User, Shield } from 'lucide-react'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 interface UsuarioFormProps {
   usuario?: Usuario | null
@@ -59,7 +60,7 @@ export function UsuarioForm({ usuario, onClose }: UsuarioFormProps) {
           // Nota: admin.updateUserById requiere service role key, en producción usar API route
         }
 
-        alert('Usuario actualizado exitosamente')
+        notifySuccess('Usuario actualizado exitosamente')
       } else {
         // Crear nuevo usuario
         // Primero crear en Supabase Auth
@@ -94,13 +95,13 @@ export function UsuarioForm({ usuario, onClose }: UsuarioFormProps) {
           throw dbError
         }
 
-        alert('Usuario creado exitosamente')
+        notifySuccess('Usuario creado exitosamente')
       }
 
       onClose()
     } catch (error: any) {
       console.error('Error guardando usuario:', error)
-      alert(`Error: ${error.message}`)
+      notifyError(error?.message ? `Error: ${error.message}` : 'Error al guardar usuario')
     } finally {
       setCreating(false)
     }
@@ -125,75 +126,90 @@ export function UsuarioForm({ usuario, onClose }: UsuarioFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Email *</label>
-              <input
-                type="email"
-                required
-                disabled={!!usuario}
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <Mail className="field-icon" />
+                <input
+                  type="email"
+                  required
+                  disabled={!!usuario}
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
                 {usuario ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}
               </label>
-              <input
-                type="password"
-                required={!usuario}
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="input"
-                placeholder={usuario ? 'Opcional' : ''}
-              />
+              <div className="field-wrap">
+                <Lock className="field-icon" />
+                <input
+                  type="password"
+                  required={!usuario}
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="input field-input"
+                  placeholder={usuario ? 'Opcional' : ''}
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Nombre *</label>
-              <input
-                type="text"
-                required
-                value={formData.nombre}
-                onChange={(e) =>
-                  setFormData({ ...formData, nombre: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <User className="field-icon" />
+                <input
+                  type="text"
+                  required
+                  value={formData.nombre}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nombre: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Apellido</label>
-              <input
-                type="text"
-                value={formData.apellido}
-                onChange={(e) =>
-                  setFormData({ ...formData, apellido: e.target.value })
-                }
-                className="input"
-              />
+              <div className="field-wrap">
+                <User className="field-icon" />
+                <input
+                  type="text"
+                  value={formData.apellido}
+                  onChange={(e) =>
+                    setFormData({ ...formData, apellido: e.target.value })
+                  }
+                  className="input field-input"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Rol *</label>
-              <select
-                value={formData.rol}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    rol: e.target.value as 'admin' | 'prestamista' | 'operador',
-                  })
-                }
-                className="input"
-              >
-                <option value="prestamista">Prestamista</option>
-                <option value="operador">Operador</option>
-                <option value="admin">Administrador</option>
-              </select>
+              <div className="field-wrap">
+                <Shield className="field-icon" />
+                <select
+                  value={formData.rol}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      rol: e.target.value as 'admin' | 'prestamista' | 'operador',
+                    })
+                  }
+                  className="input field-input"
+                >
+                  <option value="prestamista">Prestamista</option>
+                  <option value="operador">Operador</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
             </div>
           </div>
 

@@ -239,28 +239,29 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600 text-lg">Resumen general de tu sistema</p>
+    <div className="page animate-fade-in">
+      <div className="hero-card">
+        <h1 className="hero-title">Dashboard</h1>
+        <p className="hero-subtitle">Resumen general de tu sistema y métricas clave</p>
+        <div className="page-actions">
+          <div className="panel px-4 py-2 flex items-center gap-2 text-sm text-gray-600">
+            <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+            Estado: {stats.prestamosVencidos > 0 ? 'Atención requerida' : 'Operación estable'}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="stat-grid">
         {statCards.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <div key={index} className="card-hover group">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`${stat.bgColor} p-3 rounded-xl`}>
-                  <Icon className={`h-6 w-6 ${stat.textColor}`} />
-                </div>
-                <div className={`bg-gradient-to-br ${stat.gradient} p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  <Icon className="h-5 w-5 text-white" />
-                </div>
-              </div>
+            <div key={index} className="kpi-card">
               <div>
-                <p className="text-sm font-semibold text-gray-600 mb-2">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="stat-label">{stat.title}</p>
+                <p className="stat-value">{stat.value}</p>
+              </div>
+              <div className={`kpi-icon ${stat.bgColor}`}>
+                <Icon className={`h-6 w-6 ${stat.textColor}`} />
               </div>
             </div>
           )
@@ -268,25 +269,25 @@ export function Dashboard() {
       </div>
 
       {stats.prestamosVencidos > 0 && (
-        <div className="card border-l-4 border-red-500">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="bg-red-100 p-2 rounded-lg">
-              <AlertCircle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Préstamos Vencidos
-              </h2>
-              <p className="text-sm text-gray-600">
-                {stats.prestamosVencidos} préstamo(s) requieren atención
-              </p>
+        <div className="panel">
+          <div className="panel-header">
+            <div className="flex items-center gap-3">
+              <div className="bg-red-100 p-2 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h2 className="panel-title">Préstamos Vencidos</h2>
+                <p className="panel-subtitle">
+                  {stats.prestamosVencidos} préstamo(s) requieren atención
+                </p>
+              </div>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="panel-body space-y-3">
             {prestamosVencidos.map((prestamo) => (
               <div
                 key={prestamo.id}
-                className="flex justify-between items-center p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border border-red-100 hover:shadow-md transition-shadow"
+                className="flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50/40 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-semibold text-gray-900 mb-1">
@@ -294,7 +295,9 @@ export function Dashboard() {
                   </p>
                   <p className="text-sm text-gray-600 flex items-center space-x-2">
                     <Calendar className="h-4 w-4" />
-                    <span>Vencido: {format(new Date(prestamo.fecha_vencimiento), 'dd/MM/yyyy')}</span>
+                    <span>
+                      Vencido: {format(new Date(prestamo.fecha_vencimiento), 'dd/MM/yyyy')}
+                    </span>
                   </p>
                 </div>
                 <div className="text-right">

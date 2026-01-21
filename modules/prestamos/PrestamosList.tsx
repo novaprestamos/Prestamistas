@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { supabase, Prestamo, Cliente } from '@/lib/supabase'
 import { PrestamoForm } from './PrestamoForm'
 import { PrestamoCard } from './PrestamoCard'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Plus, Search, Filter, FileText } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 export function PrestamosList() {
   const { usuario } = useUsuario()
@@ -44,6 +45,7 @@ export function PrestamosList() {
       setClientes(data || [])
     } catch (error) {
       console.error('Error cargando clientes:', error)
+      notifyError('Error al cargar clientes')
     }
   }
 
@@ -70,7 +72,7 @@ export function PrestamosList() {
       setPrestamos(data || [])
     } catch (error) {
       console.error('Error cargando préstamos:', error)
-      alert('Error al cargar préstamos')
+      notifyError('Error al cargar préstamos')
     } finally {
       setLoading(false)
     }
@@ -85,7 +87,7 @@ export function PrestamosList() {
       if (!prestamo) return
 
       if (usuario?.rol !== 'admin' && prestamo.created_by !== usuario?.id) {
-        alert('No tienes permisos para eliminar este préstamo')
+        notifyError('No tienes permisos para eliminar este préstamo')
         return
       }
 
@@ -95,10 +97,11 @@ export function PrestamosList() {
         .eq('id', id)
 
       if (error) throw error
+      notifySuccess('Préstamo eliminado exitosamente')
       loadPrestamos()
     } catch (error) {
       console.error('Error eliminando préstamo:', error)
-      alert('Error al eliminar préstamo')
+      notifyError('Error al eliminar préstamo')
     }
   }
 
@@ -124,48 +127,101 @@ export function PrestamosList() {
     return matchesSearch && matchesEstado
   })
 
+  const totalPrestamos = prestamos.length
+  const prestamosActivosCount = prestamos.filter((p) => p.estado === 'activo').length
+  const prestamosVencidosCount = prestamos.filter((p) => p.estado === 'vencido').length
+  const prestamosPagadosCount = prestamos.filter((p) => p.estado === 'pagado').length
+
   if (loading) {
     return <div className="text-center py-8">Cargando préstamos...</div>
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestión de Préstamos</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn btn-primary flex items-center space-x-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Nuevo Préstamo</span>
-        </button>
+    <div className="page">
+      <div className="hero-card">
+        <h1 className="hero-title">Gestión de Préstamos</h1>
+        <p className="hero-subtitle">Organiza y controla el estado de tus préstamos</p>
+        <div className="page-actions">
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn btn-primary flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Nuevo Préstamo</span>
+          </button>
+        </div>
       </div>
 
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Buscar por cliente o descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input pl-10"
-          />
+      <div className="filter-panel">
+        <div className="filter-group">
+          <span className="filter-label">Buscar</span>
+          <div className="filter-input">
+            <Search className="filter-icon" />
+            <input
+              type="text"
+              placeholder="Buscar por cliente o descripción..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input filter-input-field"
+            />
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Filter className="h-5 w-5 text-gray-500" />
-          <select
-            value={filterEstado}
-            onChange={(e) => setFilterEstado(e.target.value)}
-            className="input"
-          >
-            <option value="todos">Todos los estados</option>
-            <option value="activo">Activos</option>
-            <option value="pagado">Pagados</option>
-            <option value="vencido">Vencidos</option>
-            <option value="moroso">Morosos</option>
-            <option value="cancelado">Cancelados</option>
-          </select>
+        <div className="filter-group">
+          <span className="filter-label">Estado</span>
+          <div className="filter-input">
+            <Filter className="filter-icon" />
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="input filter-input-field"
+            >
+              <option value="todos">Todos los estados</option>
+              <option value="activo">Activos</option>
+              <option value="pagado">Pagados</option>
+              <option value="vencido">Vencidos</option>
+              <option value="moroso">Morosos</option>
+              <option value="cancelado">Cancelados</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="stat-grid">
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Total préstamos</p>
+            <p className="stat-value">{totalPrestamos}</p>
+          </div>
+          <div className="kpi-icon">
+            <FileText className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Activos</p>
+            <p className="stat-value">{prestamosActivosCount}</p>
+          </div>
+          <div className="kpi-icon">
+            <FileText className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Vencidos</p>
+            <p className="stat-value">{prestamosVencidosCount}</p>
+          </div>
+          <div className="kpi-icon">
+            <FileText className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div>
+            <p className="stat-label">Pagados</p>
+            <p className="stat-value">{prestamosPagadosCount}</p>
+          </div>
+          <div className="kpi-icon">
+            <FileText className="h-5 w-5" />
+          </div>
         </div>
       </div>
 
@@ -177,24 +233,34 @@ export function PrestamosList() {
         />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPrestamos.map((prestamo) => (
-          <PrestamoCard
-            key={prestamo.id}
-            prestamo={prestamo}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
-
-      {filteredPrestamos.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          {searchTerm || filterEstado !== 'todos'
-            ? 'No se encontraron préstamos'
-            : 'No hay préstamos registrados'}
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Listado de Préstamos</h2>
+            <p className="panel-subtitle">Controla estados y movimientos</p>
+          </div>
         </div>
-      )}
+        <div className="panel-body">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPrestamos.map((prestamo) => (
+              <PrestamoCard
+                key={prestamo.id}
+                prestamo={prestamo}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+
+          {filteredPrestamos.length === 0 && (
+            <div className="empty-state">
+              {searchTerm || filterEstado !== 'todos'
+                ? 'No se encontraron préstamos'
+                : 'No hay préstamos registrados'}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

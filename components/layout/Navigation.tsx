@@ -27,82 +27,56 @@ export function Navigation() {
   }
 
   return (
-    <nav className="bg-gradient-to-r from-primary-700 via-primary-800 to-primary-900 text-white shadow-xl border-b border-primary-600">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
-              <FileText className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Sistema de Prestamistas</h1>
-              <p className="text-xs text-primary-200">{usuario?.rol === 'admin' ? 'Administrador' : 'Prestamista'}</p>
+    <nav className="app-nav">
+      <div className="app-nav-container">
+        <div className="app-nav-brand">
+          <div className="app-nav-logo">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="app-nav-title">Sistema de Prestamistas</div>
+            <div className="app-nav-subtitle">
+              {usuario?.rol === 'admin' ? 'Administrador' : 'Prestamista'}
             </div>
           </div>
+        </div>
 
-          {/* Navigation Items */}
-          <div className="flex items-center space-x-2">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
-                      : 'text-primary-100 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              )
-            })}
-            
-            {usuario?.rol === 'admin' && (
+        <div className="app-nav-links">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
+            return (
               <Link
-                href="/usuarios"
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-200 ${
-                  pathname === '/usuarios'
-                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
-                    : 'text-primary-100 hover:bg-white/10 hover:text-white'
-                }`}
+                key={item.href}
+                href={item.href}
+                className={`app-nav-link ${isActive ? 'app-nav-link-active' : ''}`}
               >
-                <UserCog className="h-5 w-5" />
-                <span className="font-medium">Usuarios</span>
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
               </Link>
-            )}
-            
-            <div className="border-l border-white/20 h-10 mx-3"></div>
-            
-            {/* User Menu */}
-            <div className="flex items-center space-x-3">
-              <Link
-                href="/perfil"
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-200 ${
-                  pathname === '/perfil'
-                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
-                    : 'text-primary-100 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <div className="bg-white/20 p-1.5 rounded-lg">
-                  <User className="h-4 w-4" />
-                </div>
-                <span className="font-medium">{usuario?.nombre || 'Perfil'}</span>
-              </Link>
-              
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2.5 rounded-xl text-primary-100 hover:bg-red-500/20 hover:text-white transition-all duration-200 border border-transparent hover:border-red-400/30"
-                title="Cerrar sesión"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
+            )
+          })}
+
+          {usuario?.rol === 'admin' && (
+            <Link
+              href="/usuarios"
+              className={`app-nav-link ${pathname === '/usuarios' ? 'app-nav-link-active' : ''}`}
+            >
+              <UserCog className="h-4 w-4" />
+              <span>Usuarios</span>
+            </Link>
+          )}
+        </div>
+
+        <div className="app-nav-footer">
+          <Link href="/perfil" className="app-nav-user">
+            <User className="h-4 w-4" />
+            <span>{usuario?.nombre || 'Perfil'}</span>
+          </Link>
+          <button onClick={handleLogout} className="app-nav-button" title="Cerrar sesión">
+            <LogOut className="h-4 w-4" />
+            <span>Cerrar sesión</span>
+          </button>
         </div>
       </div>
     </nav>

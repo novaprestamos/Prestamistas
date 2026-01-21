@@ -13,91 +13,76 @@ interface PagoCardProps {
 
 export function PagoCard({ pago, onEdit, onDelete }: PagoCardProps) {
   return (
-    <div className="card hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start mb-4">
+    <div className="data-card">
+      <div className="data-card-header">
         <div>
-          <h3 className="text-xl font-bold">
+          <div className="data-title">
             {pago.prestamo?.cliente?.nombre} {pago.prestamo?.cliente?.apellido}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {pago.prestamo?.cliente?.documento_identidad}
-          </p>
+          </div>
+          <div className="data-subtitle">{pago.prestamo?.cliente?.documento_identidad}</div>
         </div>
-        <div className="flex space-x-2">
+        <div className="data-actions">
           <button
+            type="button"
             onClick={() => onEdit(pago)}
-            className="text-primary-600 hover:text-primary-800"
+            className="icon-button icon-button-soft"
           >
-            <Edit className="h-5 w-5" />
+            <Edit className="h-4 w-4" />
           </button>
           <button
+            type="button"
             onClick={() => onDelete(pago.id)}
-            className="text-red-600 hover:text-red-800"
+            className="icon-button icon-button-danger"
           >
-            <Trash2 className="h-5 w-5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">Monto:</span>
-          <span className="text-2xl font-bold text-green-600">
-            ${pago.monto.toLocaleString('es-ES', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+      <div className="data-badges">
+        <span className="data-badge">{pago.tipo_pago}</span>
+        <span className="data-badge data-badge-success">{pago.metodo_pago}</span>
+        {pago.numero_recibo && <span className="data-badge">Recibo {pago.numero_recibo}</span>}
+      </div>
+
+      <div className="data-card-body">
+        <div className="data-row">
+          <DollarSign className="h-4 w-4" />
+          <span>
+            Monto: ${pago.monto.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center space-x-2 text-gray-700">
-            <Calendar className="h-4 w-4" />
-            <span>
-              {format(new Date(pago.fecha_pago), 'dd/MM/yyyy', { locale: es })}
-            </span>
-          </div>
+        <div className="data-row">
+          <Calendar className="h-4 w-4" />
+          <span>{format(new Date(pago.fecha_pago), 'dd/MM/yyyy', { locale: es })}</span>
+        </div>
 
-          <div className="flex items-center space-x-2 text-gray-700">
-            <DollarSign className="h-4 w-4" />
-            <span className="capitalize">{pago.metodo_pago}</span>
-          </div>
+        <div className="data-row">
+          <DollarSign className="h-4 w-4" />
+          <span className="capitalize">Método: {pago.metodo_pago}</span>
+        </div>
 
-          <div className="text-gray-700">
-            <span className="font-medium">Tipo:</span>{' '}
-            <span className="capitalize">{pago.tipo_pago}</span>
-          </div>
-
-          {pago.numero_recibo && (
-            <div className="flex items-center space-x-2 text-gray-700">
-              <Receipt className="h-4 w-4" />
-              <span>Recibo: {pago.numero_recibo}</span>
-            </div>
-          )}
+        <div className="data-row">
+          <Receipt className="h-4 w-4" />
+          <span className="capitalize">Tipo: {pago.tipo_pago}</span>
         </div>
 
         {pago.notas && (
-          <div className="pt-3 border-t">
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Notas:</span> {pago.notas}
-            </p>
+          <div className="data-row">
+            <span className="data-pill">Notas</span>
+            <span>{pago.notas}</span>
           </div>
         )}
+      </div>
 
-        <div className="pt-3 border-t">
-          <p className="text-xs text-gray-500">
-            Préstamo: $
-            {pago.prestamo?.monto_principal.toLocaleString('es-ES', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}{' '}
-            - Pendiente: $
-            {pago.prestamo?.monto_pendiente.toLocaleString('es-ES', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </p>
-        </div>
+      <div className="data-card-footer">
+        <span className="data-pill">
+          Préstamo: ${pago.prestamo?.monto_principal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+        </span>
+        <span className="data-pill data-pill-warning">
+          Pendiente: ${pago.prestamo?.monto_pendiente.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+        </span>
       </div>
     </div>
   )

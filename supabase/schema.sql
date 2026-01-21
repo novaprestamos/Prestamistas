@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   email TEXT UNIQUE NOT NULL,
   nombre TEXT NOT NULL,
   apellido TEXT,
+  avatar_url TEXT,
   documento_identidad TEXT UNIQUE,
   celular TEXT,
   pais TEXT DEFAULT 'Colombia',
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS clientes (
   documento_identidad TEXT UNIQUE NOT NULL,
   nombre TEXT NOT NULL,
   apellido TEXT NOT NULL,
+  avatar_url TEXT,
   telefono TEXT,
   email TEXT,
   direccion TEXT,
@@ -108,6 +110,12 @@ CREATE INDEX IF NOT EXISTS idx_pagos_prestamo ON pagos(prestamo_id);
 CREATE INDEX IF NOT EXISTS idx_pagos_fecha ON pagos(fecha_pago);
 CREATE INDEX IF NOT EXISTS idx_auditoria_tabla ON auditoria(tabla);
 CREATE INDEX IF NOT EXISTS idx_auditoria_usuario ON auditoria(usuario_id);
+
+-- ============================================
+-- ALTER TABLE PARA CAMPOS NUEVOS (AVATAR)
+-- ============================================
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
 -- Función para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()

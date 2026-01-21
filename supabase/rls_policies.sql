@@ -11,17 +11,47 @@ ALTER TABLE configuracion ENABLE ROW LEVEL SECURITY;
 -- POLÍTICAS PARA USUARIOS
 -- ============================================
 
+-- Funciones auxiliares para evitar recursión en RLS
+CREATE OR REPLACE FUNCTION public.current_user_rol()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_rol TEXT;
+BEGIN
+  SELECT rol INTO v_rol FROM public.usuarios WHERE id = auth.uid();
+  RETURN v_rol;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN public.current_user_rol() = 'admin';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.current_user_rol() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.current_user_rol() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
+
 -- Los usuarios pueden ver su propio perfil
 CREATE POLICY "Usuarios pueden ver su propio perfil"
   ON usuarios FOR SELECT
-  USING (auth.uid()::text = id::text OR 
-         (SELECT rol FROM usuarios WHERE email = auth.jwt()->>'email') = 'admin');
+  USING (auth.uid()::text = id::text OR public.is_admin());
 
 -- Admins o auto-registro de prestamistas
 CREATE POLICY "Solo admins pueden crear usuarios"
   ON usuarios FOR INSERT
   WITH CHECK (
-    (SELECT rol FROM usuarios WHERE email = auth.jwt()->>'email') = 'admin' OR
+    public.is_admin() OR
     (
       auth.role() = 'authenticated' AND
       email = auth.jwt()->>'email' AND
@@ -33,19 +63,18 @@ CREATE POLICY "Solo admins pueden crear usuarios"
 -- Los usuarios pueden actualizar su propio perfil (excepto rol)
 CREATE POLICY "Usuarios pueden actualizar su perfil"
   ON usuarios FOR UPDATE
-  USING (auth.uid()::text = id::text OR 
-         (SELECT rol FROM usuarios WHERE email = auth.jwt()->>'email') = 'admin')
+  USING (auth.uid()::text = id::text OR public.is_admin())
   WITH CHECK (
     -- Los usuarios no pueden cambiar su propio rol
-    (auth.uid()::text = id::text AND OLD.rol = NEW.rol) OR
-    (SELECT rol FROM usuarios WHERE email = auth.jwt()->>'email') = 'admin'
+    (auth.uid()::text = id::text AND rol = public.current_user_rol()) OR
+    public.is_admin()
   );
 
 -- Solo admins pueden eliminar usuarios
 CREATE POLICY "Solo admins pueden eliminar usuarios"
   ON usuarios FOR DELETE
   USING (
-    (SELECT rol FROM usuarios WHERE email = auth.jwt()->>'email') = 'admin'
+    public.is_admin()
   );
 
 -- ============================================
@@ -187,3 +216,30 @@ CREATE POLICY "Solo admins pueden modificar configuración"
   USING (
     (SELECT rol FROM usuarios WHERE email = auth.jwt()->>'email') = 'admin'
   );
+
+-- ============================================
+-- STORAGE PARA AVATARES
+-- ============================================
+
+-- Crear bucket público para avatares (si no existe)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Permitir lectura pública de avatares
+CREATE POLICY "Avatares públicos"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'avatars');
+
+-- Permitir subida/actualización/borrado a usuarios autenticados
+CREATE POLICY "Usuarios autenticados pueden subir avatares"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Usuarios autenticados pueden actualizar avatares"
+  ON storage.objects FOR UPDATE
+  USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Usuarios autenticados pueden borrar avatares"
+  ON storage.objects FOR DELETE
+  USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
