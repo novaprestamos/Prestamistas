@@ -118,21 +118,27 @@ export function UsuariosList() {
 
   return (
     <div className="page">
-      <div className="hero-card">
-        <h1 className="hero-title">Gestión de Usuarios</h1>
-        <p className="hero-subtitle">Administra roles y aprobaciones</p>
-        <div className="page-actions">
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn btn-primary flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Nuevo Usuario</span>
-          </button>
+      <div className="user-hero">
+        <div className="user-hero-glow" />
+        <div className="user-hero-content">
+          <div>
+            <div className="user-hero-overline">Administración</div>
+            <h1 className="user-hero-title">Gestión de Usuarios</h1>
+            <p className="user-hero-subtitle">Administra accesos, roles y aprobaciones</p>
+          </div>
+          <div className="user-hero-actions">
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn btn-primary flex items-center space-x-2"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Nuevo Usuario</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="filter-panel">
+      <div className="filter-panel user-filter-panel">
         <div className="filter-group">
           <span className="filter-label">Buscar</span>
           <div className="filter-input">
@@ -148,8 +154,8 @@ export function UsuariosList() {
         </div>
       </div>
 
-      <div className="stat-grid">
-        <div className="kpi-card">
+      <div className="user-stats-grid">
+        <div className="user-stat">
           <div>
             <p className="stat-label">Total usuarios</p>
             <p className="stat-value">{totalUsuarios}</p>
@@ -158,7 +164,7 @@ export function UsuariosList() {
             <User className="h-5 w-5" />
           </div>
         </div>
-        <div className="kpi-card">
+        <div className="user-stat">
           <div>
             <p className="stat-label">Activos</p>
             <p className="stat-value">{usuariosActivos}</p>
@@ -167,7 +173,7 @@ export function UsuariosList() {
             <User className="h-5 w-5" />
           </div>
         </div>
-        <div className="kpi-card">
+        <div className="user-stat">
           <div>
             <p className="stat-label">Pendientes</p>
             <p className="stat-value">{usuariosPendientes}</p>
@@ -185,7 +191,7 @@ export function UsuariosList() {
         />
       )}
 
-      <div className="panel">
+      <div className="panel user-panel">
         <div className="panel-header">
           <div>
             <h2 className="panel-title">Listado de Usuarios</h2>

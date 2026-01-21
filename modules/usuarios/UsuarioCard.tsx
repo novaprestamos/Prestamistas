@@ -31,15 +31,27 @@ export function UsuarioCard({ usuario, onEdit, onDelete, onApprove, currentUserI
   }
 
   const isCurrentUser = usuario.id === currentUserId
+  const iniciales = `${usuario.nombre?.[0] || ''}${usuario.apellido?.[0] || ''}`.toUpperCase().trim()
 
   return (
-    <div className={`data-card ${isCurrentUser ? 'card-hover' : ''}`}>
-      <div className="data-card-header">
-        <div>
-          <div className="data-title">
-            {usuario.nombre} {usuario.apellido}
+    <div className={`user-card ${isCurrentUser ? 'user-card-highlight' : ''}`}>
+      <div className="user-card-header">
+        <div className="user-card-identity">
+          <div className={`user-avatar ${usuario.avatar_url ? 'has-image' : ''}`}>
+            {usuario.avatar_url ? (
+              <img src={usuario.avatar_url} alt={`${usuario.nombre} ${usuario.apellido}`} />
+            ) : iniciales ? (
+              <span>{iniciales}</span>
+            ) : (
+              <UserIcon className="h-4 w-4" />
+            )}
           </div>
-          <div className="data-subtitle">{usuario.email}</div>
+          <div>
+            <div className="user-card-title">
+              {usuario.nombre} {usuario.apellido}
+            </div>
+            <div className="user-card-subtitle">{usuario.email}</div>
+          </div>
         </div>
         <div className="data-actions">
           {!usuario.activo && (
@@ -71,27 +83,31 @@ export function UsuarioCard({ usuario, onEdit, onDelete, onApprove, currentUserI
         </div>
       </div>
 
-      <div className="data-badges">
-        <span className="data-badge">{getRolLabel(usuario.rol)}</span>
-        <span className={`data-badge ${usuario.activo ? 'data-badge-success' : 'data-badge-warning'}`}>
+      <div className="user-card-badges">
+        <span className="user-chip">{getRolLabel(usuario.rol)}</span>
+        <span className={`user-chip ${usuario.activo ? 'user-chip-success' : 'user-chip-warning'}`}>
           {usuario.activo ? 'Activo' : 'Pendiente'}
         </span>
-        {isCurrentUser && <span className="data-badge data-badge-success">Tú</span>}
+        {isCurrentUser && <span className="user-chip user-chip-success">Tú</span>}
       </div>
 
-      <div className="data-card-body">
-        <div className="data-row">
+      <div className="user-card-body">
+        <div className="user-row">
           <UserIcon className="h-4 w-4" />
           <span>{getRolLabel(usuario.rol)}</span>
         </div>
-        <div className="data-row">
+        <div className="user-row">
           <Shield className="h-4 w-4" />
           <span>{usuario.activo ? 'Activo' : 'Pendiente'}</span>
         </div>
+        <div className="user-row">
+          <Mail className="h-4 w-4" />
+          <span>{usuario.email}</span>
+        </div>
       </div>
 
-      <div className="data-card-footer">
-        <span className="data-pill">{usuario.email}</span>
+      <div className="user-card-footer">
+        <span className="user-pill">{usuario.activo ? 'Acceso habilitado' : 'Pendiente de aprobación'}</span>
       </div>
     </div>
   )
