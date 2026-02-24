@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, Cliente } from '@/lib/supabase'
+import { Cliente } from '@/lib/supabase'
 import { ClienteForm } from './ClienteForm'
 import { ClienteCard } from './ClienteCard'
 import { Plus, Search, Users, UserCheck, UserX, Filter } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
-import { notifyError, notifySuccess } from '@/lib/notify'
+import { notifySuccess } from '@/lib/notify'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { fetchClientesForUsuario, fetchDeudasForClientes, deleteClienteById } from '@/lib/clientesService'
+import { handleSupabaseError } from '@/lib/errors'
 
 export function ClientesList() {
   const { usuario } = useUsuario()
@@ -34,24 +36,11 @@ export function ClientesList() {
 
     try {
       setLoading(true)
-      let query = supabase
-        .from('clientes')
-        .select('*')
-
-      // Si no es admin, filtrar solo sus clientes
-      if (usuario.rol !== 'admin') {
-        query = query.eq('created_by', usuario.id)
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false })
-
-      if (error) throw error
-      const clientesData = data || []
+      const clientesData = await fetchClientesForUsuario(usuario)
       setClientes(clientesData)
       await loadDeudas(clientesData)
     } catch (error) {
-      console.error('Error cargando clientes:', error)
-      notifyError('Error al cargar clientes')
+      handleSupabaseError('cargar clientes', error)
     } finally {
       setLoading(false)
     }
@@ -66,50 +55,11 @@ export function ClientesList() {
     }
 
     try {
-      const clienteIds = clientesData.map((cliente) => cliente.id)
-      let query = supabase
-        .from('prestamos')
-        .select('cliente_id, monto_pendiente, estado')
-        .in('cliente_id', clienteIds)
-
-      if (usuario.rol !== 'admin') {
-        query = query.eq('created_by', usuario.id)
-      }
-
-      const { data, error } = await query
-      if (error) throw error
-
-      const resumen = (data || []).reduce<Record<string, number>>((acc, prestamo) => {
-        const tieneDeuda =
-          prestamo.monto_pendiente > 0 &&
-          prestamo.estado !== 'pagado' &&
-          prestamo.estado !== 'cancelado'
-
-        if (tieneDeuda) {
-          acc[prestamo.cliente_id] =
-            (acc[prestamo.cliente_id] || 0) + prestamo.monto_pendiente
-        }
-        return acc
-      }, {})
-
-      const estados = (data || []).reduce<Record<string, { mora: boolean; activo: boolean; alDia: boolean }>>(
-        (acc, prestamo) => {
-          const current = acc[prestamo.cliente_id] || { mora: false, activo: false, alDia: false }
-          const esMora = prestamo.estado === 'moroso' || prestamo.estado === 'vencido'
-          const esActivo = prestamo.estado === 'activo'
-          return {
-            mora: current.mora || esMora,
-            activo: current.activo || esActivo,
-            alDia: current.alDia || (esActivo && !esMora),
-          }
-        },
-        {}
-      )
-
-      setDeudas(resumen)
-      setCreditos(estados)
+      const { deudas, creditos } = await fetchDeudasForClientes(clientesData, usuario)
+      setDeudas(deudas)
+      setCreditos(creditos)
     } catch (error) {
-      console.error('Error cargando deudas de clientes:', error)
+      handleSupabaseError('cargar deudas de clientes', error)
       setDeudas({})
       setCreditos({})
     }
@@ -126,17 +76,11 @@ export function ClientesList() {
         return
       }
 
-      const { error } = await supabase
-        .from('clientes')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
+      await deleteClienteById(id)
       notifySuccess('Cliente eliminado exitosamente')
       loadClientes()
     } catch (error) {
-      console.error('Error eliminando cliente:', error)
-      notifyError('Error al eliminar cliente')
+      handleSupabaseError('eliminar cliente', error)
     }
   }
 

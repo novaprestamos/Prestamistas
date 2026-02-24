@@ -2,6 +2,7 @@
 
 import { Cliente } from '@/lib/supabase'
 import { Edit, Trash2, Phone, Mail, MapPin, User, Briefcase, DollarSign } from 'lucide-react'
+import { formatCurrency } from '@/lib/format'
 
 interface ClienteCardProps {
   cliente: Cliente
@@ -16,12 +17,7 @@ export function ClienteCard({ cliente, deudaPendiente = 0, onEdit, onDelete }: C
     .trim()
 
   const deudaTexto =
-    deudaPendiente > 0
-      ? `Debe $${deudaPendiente.toLocaleString('es-ES', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`
-      : 'Sin deuda'
+    deudaPendiente > 0 ? `Debe $${formatCurrency(deudaPendiente)}` : 'Sin deuda'
 
   return (
     <div className="data-card data-card-compact">

@@ -5,6 +5,7 @@ import { supabase, Prestamo, Pago, Cliente } from '@/lib/supabase'
 import { Download, Calendar } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { notifyError } from '@/lib/notify'
+import { formatCurrency } from '@/lib/format'
 
 export function Reportes() {
   const [reporteData, setReporteData] = useState({
@@ -172,10 +173,7 @@ export function Reportes() {
               <div>
                 <p className="stat-label">Total Prestado</p>
                 <p className="stat-value text-primary-700">
-                ${reportes.totalPrestamos.toLocaleString('es-ES', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                  ${formatCurrency(reportes.totalPrestamos)}
                 </p>
               </div>
               <div className="kpi-icon">
@@ -195,10 +193,7 @@ export function Reportes() {
               <div>
                 <p className="stat-label">Total Pagado</p>
                 <p className="stat-value text-green-600">
-                ${reportes.totalPagos.toLocaleString('es-ES', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                  ${formatCurrency(reportes.totalPagos)}
                 </p>
               </div>
               <div className="kpi-icon">
@@ -242,16 +237,10 @@ export function Reportes() {
                         {prestamo.cliente?.nombre} {prestamo.cliente?.apellido}
                       </td>
                       <td>
-                        ${prestamo.monto_principal.toLocaleString('es-ES', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        ${formatCurrency(prestamo.monto_principal)}
                       </td>
                       <td>
-                        ${prestamo.monto_total.toLocaleString('es-ES', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        ${formatCurrency(prestamo.monto_total)}
                       </td>
                       <td>
                         <span

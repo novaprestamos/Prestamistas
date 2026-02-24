@@ -175,9 +175,35 @@ export function LoginForm() {
   const [sexo, setSexo] = useState('')
   const [fechaNacimiento, setFechaNacimiento] = useState('')
   const [notice, setNotice] = useState('')
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [lockUntil, setLockUntil] = useState<number | null>(null)
+
+  const isLocked = lockUntil !== null && Date.now() < lockUntil
+
+  const validateEmail = (value: string) => {
+    const trimmed = value.trim()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(trimmed)
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isLocked) {
+      setError('Demasiados intentos fallidos. Espera unos segundos antes de intentar de nuevo.')
+      return
+    }
+
+    if (!validateEmail(email)) {
+      setError('Ingresa un correo electrónico válido.')
+      return
+    }
+
+    if (!password || password.length < 6) {
+      setError('Ingresa una contraseña válida (mínimo 6 caracteres).')
+      return
+    }
+
     setError('')
     setNotice('')
     setLoading(true)
@@ -207,7 +233,15 @@ export function LoginForm() {
       }
     } catch (err: any) {
       console.error('Error en login:', err)
-      setError(err.message || 'Error al iniciar sesión')
+      setFailedAttempts((prev) => prev + 1)
+
+      if (failedAttempts + 1 >= 5) {
+        // Bloqueo temporal de 30 segundos tras varios intentos fallidos
+        setLockUntil(Date.now() + 30_000)
+      }
+
+      // Mensaje genérico para no dar pistas sobre el error exacto
+      setError('Credenciales inválidas o cuenta no autorizada.')
     } finally {
       setLoading(false)
     }

@@ -4,6 +4,7 @@ import { Prestamo, Cliente } from '@/lib/supabase'
 import { Edit, Trash2, Calendar, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { formatCurrency } from '@/lib/format'
 
 interface PrestamoCardProps {
   prestamo: Prestamo & { cliente?: Cliente }
@@ -73,15 +74,15 @@ export function PrestamoCard({ prestamo, onEdit, onDelete }: PrestamoCardProps) 
       <div className="data-card-body">
         <div className="data-row">
           <DollarSign className="h-4 w-4" />
-          <span>Principal: ${prestamo.monto_principal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+          <span>Principal: ${formatCurrency(prestamo.monto_principal)}</span>
         </div>
         <div className="data-row">
           <DollarSign className="h-4 w-4" />
-          <span>Total: ${prestamo.monto_total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+          <span>Total: ${formatCurrency(prestamo.monto_total)}</span>
         </div>
         <div className="data-row">
           <DollarSign className="h-4 w-4" />
-          <span>Pendiente: ${prestamo.monto_pendiente.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+          <span>Pendiente: ${formatCurrency(prestamo.monto_pendiente)}</span>
         </div>
 
         <div>
@@ -114,7 +115,7 @@ export function PrestamoCard({ prestamo, onEdit, onDelete }: PrestamoCardProps) 
 
       <div className="data-card-footer">
         <span className="data-pill">Vence {format(new Date(prestamo.fecha_vencimiento), 'dd/MM/yyyy', { locale: es })}</span>
-        <span className="data-pill data-pill-warning">Pagado ${prestamo.monto_pagado.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+        <span className="data-pill data-pill-warning">Pagado ${formatCurrency(prestamo.monto_pagado)}</span>
       </div>
     </div>
   )

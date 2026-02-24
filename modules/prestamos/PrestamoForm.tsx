@@ -17,6 +17,7 @@ import {
 import { format, addDays } from 'date-fns'
 import { useUsuario } from '@/lib/useUsuario'
 import { notifyError, notifySuccess } from '@/lib/notify'
+import { formatCurrency } from '@/lib/format'
 
 interface PrestamoFormProps {
   prestamo?: Prestamo | null
@@ -344,18 +345,12 @@ export function PrestamoForm({ prestamo, clientes, onClose }: PrestamoFormProps)
             <div className="loan-summary-row">
               <span className="loan-summary-label">Monto Total a Pagar:</span>
               <span className="loan-summary-value">
-                ${montoTotal.toLocaleString('es-ES', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                ${formatCurrency(montoTotal)}
               </span>
             </div>
             <p className="loan-summary-note">
               Interés: $
-              {(montoTotal - (parseFloat(formData.monto_principal) || 0)).toLocaleString(
-                'es-ES',
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-              )}
+              {formatCurrency(montoTotal - (parseFloat(formData.monto_principal) || 0))}
             </p>
           </div>
 

@@ -5,6 +5,7 @@ import { supabase, Pago, Prestamo } from '@/lib/supabase'
 import { X, FileText, DollarSign, Calendar, ClipboardList, CreditCard, Receipt, StickyNote } from 'lucide-react'
 import { format } from 'date-fns'
 import { notifyError, notifySuccess } from '@/lib/notify'
+import { formatCurrency } from '@/lib/format'
 
 interface PagoFormProps {
   pago?: Pago | null
@@ -116,26 +117,16 @@ export function PagoForm({ pago, prestamos, onClose }: PagoFormProps) {
                 {prestamos.map((prestamo) => (
                   <option key={prestamo.id} value={prestamo.id}>
                     Cliente ID: {prestamo.cliente_id} - Monto: $
-                    {prestamo.monto_principal.toLocaleString('es-ES', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{' '}
+                {formatCurrency(prestamo.monto_principal)}{' '}
                     - Pendiente: $
-                    {prestamo.monto_pendiente.toLocaleString('es-ES', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatCurrency(prestamo.monto_pendiente)}
                   </option>
                 ))}
               </select>
             </div>
             {prestamoSeleccionado && (
               <p className="text-sm text-gray-600 mt-1">
-                Pendiente: $
-                {prestamoSeleccionado.monto_pendiente.toLocaleString('es-ES', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                Pendiente: ${formatCurrency(prestamoSeleccionado.monto_pendiente)}
               </p>
             )}
           </div>

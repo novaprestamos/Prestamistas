@@ -4,6 +4,7 @@ import { Pago, Prestamo, Cliente } from '@/lib/supabase'
 import { Edit, Trash2, Calendar, DollarSign, Receipt } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { formatCurrency } from '@/lib/format'
 
 interface PagoCardProps {
   pago: Pago & { prestamo?: Prestamo & { cliente?: Cliente } }
@@ -49,7 +50,7 @@ export function PagoCard({ pago, onEdit, onDelete }: PagoCardProps) {
         <div className="data-row">
           <DollarSign className="h-4 w-4" />
           <span>
-            Monto: ${pago.monto.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+            Monto: ${formatCurrency(pago.monto)}
           </span>
         </div>
 
@@ -78,10 +79,10 @@ export function PagoCard({ pago, onEdit, onDelete }: PagoCardProps) {
 
       <div className="data-card-footer">
         <span className="data-pill">
-          Préstamo: ${pago.prestamo?.monto_principal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+          Préstamo: ${pago.prestamo ? formatCurrency(pago.prestamo.monto_principal) : '-'}
         </span>
         <span className="data-pill data-pill-warning">
-          Pendiente: ${pago.prestamo?.monto_pendiente.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+          Pendiente: ${pago.prestamo ? formatCurrency(pago.prestamo.monto_pendiente) : '-'}
         </span>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { supabase, Prestamo, Pago, Cliente } from '@/lib/supabase'
 import { DollarSign, Users, FileText, TrendingUp, AlertCircle, Calendar } from 'lucide-react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useUsuario } from '@/lib/useUsuario'
+import { formatCurrency } from '@/lib/format'
 
 export function Dashboard() {
   const { usuario } = useUsuario()
@@ -194,10 +195,7 @@ export function Dashboard() {
     },
     {
       title: 'Monto Prestado',
-      value: `$${stats.montoPrestado.toLocaleString('es-ES', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      value: `$${formatCurrency(stats.montoPrestado)}`,
       icon: DollarSign,
       gradient: 'from-primary-500 to-primary-600',
       bgColor: 'bg-primary-50',
@@ -205,10 +203,7 @@ export function Dashboard() {
     },
     {
       title: 'Monto Pendiente',
-      value: `$${stats.montoPendiente.toLocaleString('es-ES', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      value: `$${formatCurrency(stats.montoPendiente)}`,
       icon: TrendingUp,
       gradient: 'from-orange-500 to-orange-600',
       bgColor: 'bg-orange-50',
@@ -216,10 +211,7 @@ export function Dashboard() {
     },
     {
       title: 'Monto Recuperado',
-      value: `$${stats.montoRecuperado.toLocaleString('es-ES', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      value: `$${formatCurrency(stats.montoRecuperado)}`,
       icon: DollarSign,
       gradient: 'from-emerald-500 to-emerald-600',
       bgColor: 'bg-emerald-50',
@@ -227,10 +219,7 @@ export function Dashboard() {
     },
     {
       title: 'Pagos del Mes',
-      value: `$${stats.pagosMes.toLocaleString('es-ES', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      value: `$${formatCurrency(stats.pagosMes)}`,
       icon: DollarSign,
       gradient: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50',
@@ -302,10 +291,7 @@ export function Dashboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-red-600">
-                    ${prestamo.monto_pendiente.toLocaleString('es-ES', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    ${formatCurrency(prestamo.monto_pendiente)}
                   </p>
                   <p className="text-xs text-gray-500 font-medium">Pendiente</p>
                 </div>

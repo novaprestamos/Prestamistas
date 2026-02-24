@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, Pago, Prestamo, Cliente } from '@/lib/supabase'
+import { Pago, Prestamo, Cliente } from '@/lib/supabase'
 import { PagoForm } from './PagoForm'
 import { PagoCard } from './PagoCard'
 import { Plus, Search, Filter, Calendar } from 'lucide-react'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { format } from 'date-fns'
 import { useUsuario } from '@/lib/useUsuario'
-import { notifyError, notifySuccess } from '@/lib/notify'
+import { notifySuccess } from '@/lib/notify'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatCurrency } from '@/lib/format'
+import { fetchPrestamosParaPagos, fetchPagosForMes, deletePagoById } from '@/lib/pagosService'
+import { handleSupabaseError } from '@/lib/errors'
 
 export function PagosList() {
   const { usuario } = useUsuario()
@@ -35,22 +37,10 @@ export function PagosList() {
     if (!usuario) return
 
     try {
-      let query = supabase
-        .from('prestamos')
-        .select('*')
-        .in('estado', ['activo', 'vencido', 'moroso'])
-
-      // Si no es admin, solo sus préstamos
-      if (usuario.rol !== 'admin') {
-        query = query.eq('created_by', usuario.id)
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false })
-
-      if (error) throw error
-      setPrestamos(data || [])
+      const data = await fetchPrestamosParaPagos(usuario)
+      setPrestamos(data)
     } catch (error) {
-      console.error('Error cargando préstamos:', error)
+      handleSupabaseError('cargar préstamos para pagos', error)
     }
   }
 
@@ -59,48 +49,10 @@ export function PagosList() {
 
     try {
       setLoading(true)
-      const inicioMes = startOfMonth(new Date(filterMes + '-01'))
-      const finMes = endOfMonth(new Date(filterMes + '-01'))
-
-      let query = supabase
-        .from('pagos')
-        .select(`
-          *,
-          prestamo:prestamos(
-            *,
-            cliente:clientes(*)
-          )
-        `)
-        .gte('fecha_pago', format(inicioMes, 'yyyy-MM-dd'))
-        .lte('fecha_pago', format(finMes, 'yyyy-MM-dd'))
-
-      // Filtrar pagos de préstamos del usuario
-      if (usuario.rol !== 'admin') {
-        // Primero obtener IDs de préstamos del usuario
-        const { data: userPrestamos } = await supabase
-          .from('prestamos')
-          .select('id')
-          .eq('created_by', usuario.id)
-
-        const prestamoIds = userPrestamos?.map((p) => p.id) || []
-        
-        if (prestamoIds.length > 0) {
-          query = query.in('prestamo_id', prestamoIds)
-        } else {
-          // Si no tiene préstamos, no mostrar pagos
-          setPagos([])
-          setLoading(false)
-          return
-        }
-      }
-
-      const { data, error } = await query.order('fecha_pago', { ascending: false })
-
-      if (error) throw error
-      setPagos(data || [])
+      const data = await fetchPagosForMes(usuario, filterMes)
+      setPagos(data)
     } catch (error) {
-      console.error('Error cargando pagos:', error)
-      notifyError('Error al cargar pagos')
+      handleSupabaseError('cargar pagos', error)
     } finally {
       setLoading(false)
     }
@@ -108,18 +60,12 @@ export function PagosList() {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('pagos')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
+      await deletePagoById(id)
       notifySuccess('Pago eliminado exitosamente')
       loadPagos()
       loadPrestamos()
     } catch (error) {
-      console.error('Error eliminando pago:', error)
-      notifyError('Error al eliminar pago')
+      handleSupabaseError('eliminar pago', error)
     }
   }
 

@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase, Prestamo, Cliente } from '@/lib/supabase'
+import { Prestamo, Cliente } from '@/lib/supabase'
 import { PrestamoForm } from './PrestamoForm'
 import { PrestamoCard } from './PrestamoCard'
 import { Plus, Search, Filter, FileText } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
-import { notifyError, notifySuccess } from '@/lib/notify'
+import { notifySuccess } from '@/lib/notify'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { fetchClientesActivosParaPrestamos, fetchPrestamosForUsuario, deletePrestamoById } from '@/lib/prestamosService'
+import { handleSupabaseError } from '@/lib/errors'
 
 export function PrestamosList() {
   const { usuario } = useUsuario()
@@ -31,23 +33,10 @@ export function PrestamosList() {
     if (!usuario) return
 
     try {
-      let query = supabase
-        .from('clientes')
-        .select('*')
-        .eq('activo', true)
-
-      // Si no es admin, solo sus clientes
-      if (usuario.rol !== 'admin') {
-        query = query.eq('created_by', usuario.id)
-      }
-
-      const { data, error } = await query.order('nombre')
-
-      if (error) throw error
-      setClientes(data || [])
+      const data = await fetchClientesActivosParaPrestamos(usuario)
+      setClientes(data)
     } catch (error) {
-      console.error('Error cargando clientes:', error)
-      notifyError('Error al cargar clientes')
+      handleSupabaseError('cargar clientes para préstamos', error)
     }
   }
 
@@ -56,25 +45,10 @@ export function PrestamosList() {
 
     try {
       setLoading(true)
-      let query = supabase
-        .from('prestamos')
-        .select(`
-          *,
-          cliente:clientes(*)
-        `)
-
-      // Si no es admin, solo sus préstamos
-      if (usuario.rol !== 'admin') {
-        query = query.eq('created_by', usuario.id)
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false })
-
-      if (error) throw error
-      setPrestamos(data || [])
+      const data = await fetchPrestamosForUsuario(usuario)
+      setPrestamos(data)
     } catch (error) {
-      console.error('Error cargando préstamos:', error)
-      notifyError('Error al cargar préstamos')
+      handleSupabaseError('cargar préstamos', error)
     } finally {
       setLoading(false)
     }
@@ -91,17 +65,11 @@ export function PrestamosList() {
         return
       }
 
-      const { error } = await supabase
-        .from('prestamos')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
+      await deletePrestamoById(id)
       notifySuccess('Préstamo eliminado exitosamente')
       loadPrestamos()
     } catch (error) {
-      console.error('Error eliminando préstamo:', error)
-      notifyError('Error al eliminar préstamo')
+      handleSupabaseError('eliminar préstamo', error)
     }
   }
 

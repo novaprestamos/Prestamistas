@@ -8,6 +8,7 @@ import { Plus, Search, Shield, User } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
 import { notifyError, notifySuccess } from '@/lib/notify'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { handleSupabaseError } from '@/lib/errors'
 
 export function UsuariosList() {
   const { usuario: currentUser } = useUsuario()
@@ -40,8 +41,7 @@ export function UsuariosList() {
       if (error) throw error
       setUsuarios(data || [])
     } catch (error) {
-      console.error('Error cargando usuarios:', error)
-      notifyError('Error al cargar usuarios')
+      handleSupabaseError('cargar usuarios', error)
     } finally {
       setLoading(false)
     }
@@ -58,8 +58,7 @@ export function UsuariosList() {
       notifySuccess('Usuario eliminado exitosamente')
       loadUsuarios()
     } catch (error) {
-      console.error('Error eliminando usuario:', error)
-      notifyError('Error al eliminar usuario')
+      handleSupabaseError('eliminar usuario', error)
     }
   }
 
@@ -74,8 +73,7 @@ export function UsuariosList() {
       notifySuccess('Usuario aprobado exitosamente')
       loadUsuarios()
     } catch (error) {
-      console.error('Error aprobando usuario:', error)
-      notifyError('Error al aprobar usuario')
+      handleSupabaseError('aprobar usuario', error)
     }
   }
 
