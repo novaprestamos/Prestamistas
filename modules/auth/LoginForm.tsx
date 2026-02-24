@@ -173,6 +173,7 @@ export function LoginForm() {
   const [sexo, setSexo] = useState('')
   const [fechaNacimiento, setFechaNacimiento] = useState('')
   const [notice, setNotice] = useState('')
+  const [resetting, setResetting] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -305,6 +306,35 @@ export function LoginForm() {
       setError(err.message || 'No se pudo completar el registro')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    setError('')
+    setNotice('')
+
+    if (!email) {
+      setError('Ingresa tu correo electrónico para recuperar el acceso.')
+      return
+    }
+
+    try {
+      setResetting(true)
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/perfil` : undefined,
+      })
+
+      if (resetError) throw resetError
+
+      setNotice(
+        'Si el correo existe, se enviaron instrucciones para restablecer tu contraseña. Revisa tu bandeja de entrada y spam.'
+      )
+    } catch (err: any) {
+      console.error('Error en recuperación de acceso:', err)
+      setError(err.message || 'No se pudo enviar el correo de recuperación.')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -577,9 +607,14 @@ export function LoginForm() {
                   <input type="checkbox" />
                   Mantener sesion activa
                 </label>
-                <a href="#" className="login-link">
+                <button
+                  type="button"
+                  className="login-link"
+                  onClick={handlePasswordReset}
+                  disabled={loading || resetting}
+                >
                   Recuperar acceso
-                </a>
+                </button>
               </div>
             )}
 
