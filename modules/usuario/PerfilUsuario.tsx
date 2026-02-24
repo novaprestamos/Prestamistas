@@ -266,7 +266,7 @@ export function PerfilUsuario() {
   }
 
   return (
-    <div className="page">
+    <div className="page animate-fade-in">
       <div className="profile-hero">
         <div className="profile-hero-glow" />
         <div className="profile-hero-content">

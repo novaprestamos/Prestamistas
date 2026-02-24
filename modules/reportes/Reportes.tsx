@@ -101,7 +101,7 @@ export function Reportes() {
   }
 
   return (
-    <div className="page">
+    <div className="page animate-fade-in">
       <div className="hero-card">
         <h1 className="hero-title">Reportes</h1>
         <p className="hero-subtitle">Genera reportes por rangos de fecha</p>

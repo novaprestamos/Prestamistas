@@ -153,7 +153,7 @@ export function PagosList() {
   }
 
   return (
-    <div className="page">
+    <div className="page animate-fade-in">
       <div className="hero-card">
         <h1 className="hero-title">Gestión de Pagos</h1>
         <p className="hero-subtitle">Registra pagos y controla la recuperación mensual</p>

@@ -117,7 +117,7 @@ export function UsuariosList() {
   }
 
   return (
-    <div className="page">
+    <div className="page animate-fade-in">
       <div className="user-hero">
         <div className="user-hero-glow" />
         <div className="user-hero-content">

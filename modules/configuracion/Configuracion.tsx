@@ -69,7 +69,7 @@ export function ConfiguracionModule() {
   }
 
   return (
-    <div className="page">
+    <div className="page animate-fade-in">
       <div className="hero-card">
         <h1 className="hero-title">Configuración</h1>
         <p className="hero-subtitle">Parámetros clave del sistema</p>

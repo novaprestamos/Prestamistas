@@ -137,7 +137,7 @@ export function PrestamosList() {
   }
 
   return (
-    <div className="page">
+    <div className="page animate-fade-in">
       <div className="hero-card">
         <h1 className="hero-title">Gestión de Préstamos</h1>
         <p className="hero-subtitle">Organiza y controla el estado de tus préstamos</p>
