@@ -25,7 +25,7 @@ export default function RecuperarAccesoPage() {
       setLoading(true)
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo:
-          typeof window !== 'undefined' ? `${window.location.origin}/perfil` : undefined,
+          typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined,
       })
 
       if (resetError) throw resetError

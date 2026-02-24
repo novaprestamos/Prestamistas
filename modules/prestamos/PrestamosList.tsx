@@ -7,6 +7,7 @@ import { PrestamoCard } from './PrestamoCard'
 import { Plus, Search, Filter, FileText } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
 import { notifyError, notifySuccess } from '@/lib/notify'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function PrestamosList() {
   const { usuario } = useUsuario()
@@ -17,6 +18,7 @@ export function PrestamosList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState<string>('todos')
   const [editingPrestamo, setEditingPrestamo] = useState<Prestamo | null>(null)
+  const [prestamoAEliminar, setPrestamoAEliminar] = useState<Prestamo | null>(null)
 
   useEffect(() => {
     if (usuario) {
@@ -79,8 +81,6 @@ export function PrestamosList() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este préstamo?')) return
-
     try {
       // Verificar permisos
       const prestamo = prestamos.find((p) => p.id === id)
@@ -103,6 +103,10 @@ export function PrestamosList() {
       console.error('Error eliminando préstamo:', error)
       notifyError('Error al eliminar préstamo')
     }
+  }
+
+  const solicitarEliminar = (prestamo: Prestamo) => {
+    setPrestamoAEliminar(prestamo)
   }
 
   const handleEdit = (prestamo: Prestamo) => {
@@ -247,7 +251,7 @@ export function PrestamosList() {
                 key={prestamo.id}
                 prestamo={prestamo}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
+                onDelete={() => solicitarEliminar(prestamo)}
               />
             ))}
           </div>
@@ -261,6 +265,24 @@ export function PrestamosList() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!prestamoAEliminar}
+        title="Eliminar préstamo"
+        description={
+          prestamoAEliminar
+            ? `¿Está seguro de eliminar el préstamo ${prestamoAEliminar.id.substring(0, 8)}...? Esta acción no se puede deshacer.`
+            : ''
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          if (prestamoAEliminar) {
+            handleDelete(prestamoAEliminar.id)
+          }
+          setPrestamoAEliminar(null)
+        }}
+        onCancel={() => setPrestamoAEliminar(null)}
+      />
     </div>
   )
 }

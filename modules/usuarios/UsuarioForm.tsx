@@ -51,13 +51,18 @@ export function UsuarioForm({ usuario, onClose }: UsuarioFormProps) {
 
         if (error) throw error
 
-        // Si se cambió la contraseña, actualizarla en Auth
+        // Si se cambió la contraseña, actualizarla en Auth vía API segura
         if (formData.password) {
-          const { error: updatePasswordError } = await supabase.auth.admin.updateUserById(
-            usuario.id,
-            { password: formData.password }
-          )
-          // Nota: admin.updateUserById requiere service role key, en producción usar API route
+          const resp = await fetch('/api/admin/usuarios/password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: usuario.id, password: formData.password }),
+          })
+
+          if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}))
+            throw new Error(data?.error || 'No se pudo actualizar la contraseña del usuario')
+          }
         }
 
         notifySuccess('Usuario actualizado exitosamente')

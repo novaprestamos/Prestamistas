@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { ensureUsuarioForAuthUser } from '@/lib/usuario'
 import { useRouter } from 'next/navigation'
 import {
   LogIn,
@@ -192,33 +193,7 @@ export function LoginForm() {
 
       // Verificar que el usuario existe en la tabla usuarios y obtener su rol
       if (data.user) {
-        const { data: usuario, error: userError } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('email', email)
-          .single()
-
-        let usuarioDb = usuario
-
-        if (userError && userError.code === 'PGRST116') {
-          const { data: createdUser, error: createError } = await supabase
-            .from('usuarios')
-            .insert({
-              id: data.user.id,
-              email: data.user.email || email,
-              nombre: data.user.user_metadata?.nombre || email.split('@')[0],
-              apellido: data.user.user_metadata?.apellido || '',
-              rol: 'prestamista', // Por defecto prestamista, admin debe crearse manualmente
-              activo: false,
-            })
-            .select()
-            .single()
-
-          if (createError) throw createError
-          usuarioDb = createdUser
-        } else if (userError) {
-          throw userError
-        }
+        const usuarioDb = await ensureUsuarioForAuthUser(data.user)
 
         if (usuarioDb && usuarioDb.activo === false) {
           await supabase.auth.signOut()

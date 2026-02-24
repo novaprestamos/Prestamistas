@@ -5,11 +5,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Home, Users, FileText, DollarSign, Settings, BarChart, User, LogOut, UserCog } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
 import { logout } from '@/lib/auth'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useState } from 'react'
 
 export function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { usuario } = useUsuario()
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: Home },
@@ -21,9 +24,7 @@ export function Navigation() {
   ]
 
   const handleLogout = async () => {
-    if (confirm('¿Está seguro de cerrar sesión?')) {
-      await logout()
-    }
+    await logout()
   }
 
   return (
@@ -73,12 +74,24 @@ export function Navigation() {
             <User className="h-4 w-4" />
             <span>{usuario?.nombre || 'Perfil'}</span>
           </Link>
-          <button onClick={handleLogout} className="app-nav-button" title="Cerrar sesión">
+          <button onClick={() => setConfirmLogout(true)} className="app-nav-button" title="Cerrar sesión">
             <LogOut className="h-4 w-4" />
             <span>Cerrar sesión</span>
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmLogout}
+        title="Cerrar sesión"
+        description="¿Está seguro de que desea cerrar sesión en el sistema?"
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        onConfirm={async () => {
+          await handleLogout()
+          setConfirmLogout(false)
+        }}
+        onCancel={() => setConfirmLogout(false)}
+      />
     </nav>
   )
 }

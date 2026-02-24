@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, Usuario } from './supabase'
+import { ensureUsuarioForAuthUser } from './usuario'
 
 export function useUsuario() {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
@@ -18,55 +19,26 @@ export function useUsuario() {
       setError(null)
 
       // Intentar obtener usuario desde Supabase Auth
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
 
-      if (authUser?.email) {
-        // Buscar en la tabla usuarios
-        const { data, error: dbError } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('email', authUser.email)
-          .single()
+      if (!authUser) {
+        setUsuario(null)
+        return
+      }
 
-        if (dbError && dbError.code === 'PGRST116') {
-          // Si no existe, crear usuario básico
-          const { data: newUser, error: createError } = await supabase
-            .from('usuarios')
-            .insert({
-              id: authUser.id,
-              email: authUser.email,
-              nombre: authUser.user_metadata?.nombre || authUser.email.split('@')[0],
-              apellido: authUser.user_metadata?.apellido || '',
-              rol: 'prestamista',
-              activo: false,
-            })
-            .select()
-            .single()
+      const usuarioDb = await ensureUsuarioForAuthUser(authUser)
 
-          if (createError) throw createError
-          setUsuario(newUser)
-        } else if (data) {
-          if (data.activo === false) {
-            await supabase.auth.signOut()
-            setUsuario(null)
-            setError('Tu cuenta está pendiente de aprobación.')
-            return
-          }
-          setUsuario(data)
+      if (usuarioDb) {
+        if (usuarioDb.activo === false) {
+          await supabase.auth.signOut()
+          setUsuario(null)
+          setError('Tu cuenta está pendiente de aprobación.')
+          return
         }
+        setUsuario(usuarioDb)
       } else {
-        // Modo desarrollo: cargar primer usuario disponible
-        const { data: usuarios } = await supabase
-          .from('usuarios')
-          .select('*')
-          .limit(1)
-          .single()
-
-        if (usuarios) {
-          setUsuario(usuarios)
-        } else {
-          setError('No se encontró ningún usuario')
-        }
+        setUsuario(null)
+        setError('No se encontró ningún usuario asociado a esta cuenta.')
       }
     } catch (err: any) {
       console.error('Error cargando usuario:', err)

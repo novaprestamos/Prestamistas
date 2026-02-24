@@ -8,6 +8,8 @@ import { Plus, Search, Filter, Calendar } from 'lucide-react'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useUsuario } from '@/lib/useUsuario'
 import { notifyError, notifySuccess } from '@/lib/notify'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { formatCurrency } from '@/lib/format'
 
 export function PagosList() {
   const { usuario } = useUsuario()
@@ -20,6 +22,7 @@ export function PagosList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMes, setFilterMes] = useState(format(new Date(), 'yyyy-MM'))
   const [editingPago, setEditingPago] = useState<Pago | null>(null)
+  const [pagoAEliminar, setPagoAEliminar] = useState<Pago | null>(null)
 
   useEffect(() => {
     if (usuario) {
@@ -104,8 +107,6 @@ export function PagosList() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este pago?')) return
-
     try {
       const { error } = await supabase
         .from('pagos')
@@ -120,6 +121,10 @@ export function PagosList() {
       console.error('Error eliminando pago:', error)
       notifyError('Error al eliminar pago')
     }
+  }
+
+  const solicitarEliminar = (pago: Pago) => {
+    setPagoAEliminar(pago)
   }
 
   const handleEdit = (pago: Pago) => {
@@ -200,12 +205,7 @@ export function PagosList() {
         <div className="kpi-card">
           <div>
             <p className="stat-label">Total del Mes</p>
-            <p className="stat-value">
-              ${totalPagos.toLocaleString('es-ES', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </p>
+            <p className="stat-value">${formatCurrency(totalPagos)}</p>
             <p className="text-sm text-gray-500 mt-1">
               {pagosCount} pago(s) registrado(s)
             </p>
@@ -218,12 +218,7 @@ export function PagosList() {
           <div>
             <p className="stat-label">Promedio por pago</p>
             <p className="stat-value">
-              ${pagosCount > 0
-                ? (totalPagos / pagosCount).toLocaleString('es-ES', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
-                : '0,00'}
+              ${pagosCount > 0 ? formatCurrency(totalPagos / pagosCount) : '0,00'}
             </p>
             <p className="text-sm text-gray-500 mt-1">Basado en pagos del mes</p>
           </div>
@@ -254,7 +249,7 @@ export function PagosList() {
               key={pago.id}
               pago={pago}
               onEdit={handleEdit}
-              onDelete={handleDelete}
+              onDelete={() => solicitarEliminar(pago)}
             />
           ))}
 
@@ -265,6 +260,24 @@ export function PagosList() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!pagoAEliminar}
+        title="Eliminar pago"
+        description={
+          pagoAEliminar
+            ? `¿Está seguro de eliminar el pago con recibo ${pagoAEliminar.numero_recibo || pagoAEliminar.id.substring(0, 8)}?`
+            : ''
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          if (pagoAEliminar) {
+            handleDelete(pagoAEliminar.id)
+          }
+          setPagoAEliminar(null)
+        }}
+        onCancel={() => setPagoAEliminar(null)}
+      />
     </div>
   )
 }

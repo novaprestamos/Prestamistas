@@ -7,6 +7,7 @@ import { ClienteCard } from './ClienteCard'
 import { Plus, Search, Users, UserCheck, UserX, Filter } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
 import { notifyError, notifySuccess } from '@/lib/notify'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function ClientesList() {
   const { usuario } = useUsuario()
@@ -20,6 +21,7 @@ export function ClientesList() {
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [deudas, setDeudas] = useState<Record<string, number>>({})
   const [creditos, setCreditos] = useState<Record<string, { mora: boolean; activo: boolean; alDia: boolean }>>({})
+  const [clienteAEliminar, setClienteAEliminar] = useState<Cliente | null>(null)
 
   useEffect(() => {
     if (usuario) {
@@ -114,8 +116,6 @@ export function ClientesList() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este cliente?')) return
-
     try {
       // Verificar permisos
       const cliente = clientes.find((c) => c.id === id)
@@ -138,6 +138,10 @@ export function ClientesList() {
       console.error('Error eliminando cliente:', error)
       notifyError('Error al eliminar cliente')
     }
+  }
+
+  const solicitarEliminar = (cliente: Cliente) => {
+    setClienteAEliminar(cliente)
   }
 
   const handleEdit = (cliente: Cliente) => {
@@ -283,7 +287,7 @@ export function ClientesList() {
                 cliente={cliente}
                 deudaPendiente={deudas[cliente.id] || 0}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
+                onDelete={() => solicitarEliminar(cliente)}
               />
             ))}
           </div>
@@ -309,6 +313,24 @@ export function ClientesList() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!clienteAEliminar}
+        title="Eliminar cliente"
+        description={
+          clienteAEliminar
+            ? `¿Está seguro de eliminar al cliente ${clienteAEliminar.nombre} ${clienteAEliminar.apellido}? Esta acción no se puede deshacer.`
+            : ''
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          if (clienteAEliminar) {
+            handleDelete(clienteAEliminar.id)
+          }
+          setClienteAEliminar(null)
+        }}
+        onCancel={() => setClienteAEliminar(null)}
+      />
     </div>
   )
 }

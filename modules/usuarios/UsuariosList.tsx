@@ -7,6 +7,7 @@ import { UsuarioCard } from './UsuarioCard'
 import { Plus, Search, Shield, User } from 'lucide-react'
 import { useUsuario } from '@/lib/useUsuario'
 import { notifyError, notifySuccess } from '@/lib/notify'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function UsuariosList() {
   const { usuario: currentUser } = useUsuario()
@@ -15,6 +16,8 @@ export function UsuariosList() {
   const [showForm, setShowForm] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null)
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null)
+  const [usuarioAAprobar, setUsuarioAAprobar] = useState<Usuario | null>(null)
 
   useEffect(() => {
     // Solo admin puede ver esta página
@@ -45,8 +48,6 @@ export function UsuariosList() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este usuario?')) return
-
     try {
       const { error } = await supabase
         .from('usuarios')
@@ -63,8 +64,6 @@ export function UsuariosList() {
   }
 
   const handleApprove = async (id: string) => {
-    if (!confirm('¿Aprobar acceso para este usuario?')) return
-
     try {
       const { error } = await supabase
         .from('usuarios')
@@ -78,6 +77,14 @@ export function UsuariosList() {
       console.error('Error aprobando usuario:', error)
       notifyError('Error al aprobar usuario')
     }
+  }
+
+  const solicitarEliminar = (usuario: Usuario) => {
+    setUsuarioAEliminar(usuario)
+  }
+
+  const solicitarAprobar = (usuario: Usuario) => {
+    setUsuarioAAprobar(usuario)
   }
 
   const handleEdit = (usuario: Usuario) => {
@@ -205,8 +212,8 @@ export function UsuariosList() {
                 key={usuario.id}
                 usuario={usuario}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
-                onApprove={handleApprove}
+                onDelete={() => solicitarEliminar(usuario)}
+                onApprove={() => solicitarAprobar(usuario)}
                 currentUserId={currentUser?.id}
               />
             ))}
@@ -219,6 +226,43 @@ export function UsuariosList() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!usuarioAEliminar}
+        title="Eliminar usuario"
+        description={
+          usuarioAEliminar
+            ? `¿Está seguro de eliminar al usuario ${usuarioAEliminar.nombre} (${usuarioAEliminar.email})?`
+            : ''
+        }
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          if (usuarioAEliminar) {
+            handleDelete(usuarioAEliminar.id)
+          }
+          setUsuarioAEliminar(null)
+        }}
+        onCancel={() => setUsuarioAEliminar(null)}
+      />
+
+      <ConfirmDialog
+        open={!!usuarioAAprobar}
+        title="Aprobar acceso"
+        description={
+          usuarioAAprobar
+            ? `¿Aprobar acceso para ${usuarioAAprobar.nombre} (${usuarioAAprobar.email})?`
+            : ''
+        }
+        confirmLabel="Aprobar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          if (usuarioAAprobar) {
+            handleApprove(usuarioAAprobar.id)
+          }
+          setUsuarioAAprobar(null)
+        }}
+        onCancel={() => setUsuarioAAprobar(null)}
+      />
     </div>
   )
 }
